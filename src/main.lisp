@@ -81,7 +81,7 @@
           (db-user (getenv "POSTGRES_USER"))
           (db-pass (getenv "POSTGRES_PASS"))
           (db-host (getenv "POSTGRES_HOST"))
-          (db-port (getenv "POSTGRES_PORT"))
+          (db-port (parse-integer (getenv "POSTGRES_PORT")))
           (mqtt-client-id (getenv "MQTT_CLIENT_ID"))
           (mqtt-host (getenv "MQTT_HOST"))
           (mqtt-port (parse-integer (getenv "MQTT_PORT" "30001")))

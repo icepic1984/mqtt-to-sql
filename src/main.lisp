@@ -59,9 +59,9 @@
                       :null))))
 
 
-(defun start (db-host db-port db-user db-pass db-name mqtt-host mqtt-port topic runs &key (keep-alive 20))
+(defun start (db-host db-port db-user db-pass db-name mqtt-client-id mqtt-host mqtt-port topic runs &key (keep-alive 20))
   (postmodern:with-connection `(,db-name ,db-user ,db-pass ,db-host :port ,db-port)
-    (let ((client (mcutiet.client:connect-to-server mqtt-host mqtt-port :keep-alive keep-alive)))
+    (let ((client (mcutiet.client:connect-to-server mqtt-host mqtt-port :client-id mqtt-client-id :keep-alive keep-alive)))
       ;; Connect to mqtt
       (mcutiet.client:send-connect client)
       (mcutiet.client:wait-for-connack client)
@@ -82,6 +82,7 @@
           (db-pass (getenv "POSTGRES_PASS"))
           (db-host (getenv "POSTGRES_HOST"))
           (db-port (getenv "POSTGRES_PORT"))
+          (mqtt-client-id (getenv "MQTT_CLIENT_ID"))
           (mqtt-host (getenv "MQTT_HOST"))
           (mqtt-port (parse-integer (getenv "MQTT_PORT" "30001")))
           (mqtt-topic (getenv "MQTT_TOPIC"))
@@ -91,13 +92,14 @@
       (assert db-pass (db-pass))
       (assert db-host (db-host))
       (assert db-port (db-port))
+      (assert mqtt-client-id (mqtt-client-id))
       (assert mqtt-host (mqtt-host))
       (assert mqtt-port (mqtt-port))
       (assert mqtt-topic (mqtt-topic))
       ;; Loop as long as we don't have a result and we still have retries left
       (loop with i = 0 for
             entry =
-                  (restart-case (start db-host db-port db-user db-pass db-name mqtt-host mqtt-port mqtt-topic nil)
+                  (restart-case (start db-host db-port db-user db-pass db-name mqtt-client-id mqtt-host mqtt-port mqtt-topic nil)
                     (continue ()
                       :report
                       (lambda (stream)

@@ -51,8 +51,7 @@
                      'humidity humidity
                      'pressure pressure
                      'pm2_5 pm2.5
-                     'pm10 pm10
-                     )))
+                     'pm10 pm10)))
 
 ;; (defmethod mcutiet.client:process-message :after ((message mcutiet.message:pingresp) client)
 ;;   (format t "Ping RSP~%"))

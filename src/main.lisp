@@ -42,7 +42,7 @@
 (defun get-pm10 (payload)
   (getf (getf payload :|measurement|) :|pm10|))
 
-(defun insert-to-db (type location &key (temperature nil) (humidity nil) (pressure nil) (pm2.5 nil) (pm10 nil))
+(defun insert-to-db (type location &key (temperature :null) (humidity :null) (pressure :null) (pm2.5 :null) (pm10 :null))
   (postmodern:query (:insert-into 'measurements
                      :set 'time (:now)
                      'type type

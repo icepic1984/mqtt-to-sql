@@ -36,27 +36,52 @@
 (defun get-type (payload)
   (getf (getf payload :|measurement|) :|type|))
 
-(defun insert-to-db (type location temperature humidity &optional pressure)
+(defun get-pm2.5 (payload)
+  (getf (getf payload :|measurement|) :|pm25|))
+
+(defun get-pm10 (payload)
+  (getf (getf payload :|measurement|) :|pm10|))
+
+(defun insert-to-db (type location &key (temperature nil) (humidity nil) (pressure nil) (pm2.5 nil) (pm10 nil))
   (postmodern:query (:insert-into 'measurements
                      :set 'time (:now)
                      'type type
                      'location location
                      'temperature temperature
                      'humidity humidity
-                     'pressure pressure)))
+                     'pressure pressure
+                     'pm2_5 pm2.5
+                     'pm10 pm10
+                     )))
 
 ;; (defmethod mcutiet.client:process-message :after ((message mcutiet.message:pingresp) client)
 ;;   (format t "Ping RSP~%"))
 
 (defmethod mcutiet.client:process-message ((message mcutiet.message:publish) client)
-  (let ((json (jonathan:parse (babel:octets-to-string (mcutiet.message:payload message)))))
-    (insert-to-db (get-type json)
-                  (get-location json)
-                  (get-temperature json)
-                  (get-humidity json)
-                  (if (string= (get-type json) "bme280")
-                      (get-pressure json)
-                      :null))))
+  (let* ((json (jonathan:parse (babel:octets-to-string (mcutiet.message:payload message))))
+         (location (get-location json))
+         (type (get-type json)))
+    (a:switch (type :test #'equal)
+      ("bme280"
+       (insert-to-db (get-type json)
+                     (get-location json)
+                     :temperature (get-temperature json)
+                     :humidity (get-humidity json)
+                     :pressure (get-pressure json)))
+      ("sht85"
+       (insert-to-db type
+                     location
+                     :temperature (get-temperature json)
+                     :humidity (get-humidity json)))
+      ("sds011"
+       (insert-to-db type
+                     location
+                     :pm2.5 (get-pm2.5 json)
+                     :pm10 (get-pm10 json)))
+      (t (insert-to-db type
+                       location
+                       :temperature (get-temperature json)
+                       :humidity (get-humidity json))))))
 
 
 (defun start (db-host db-port db-user db-pass db-name mqtt-client-id mqtt-host mqtt-port topic runs &key (keep-alive 20))
